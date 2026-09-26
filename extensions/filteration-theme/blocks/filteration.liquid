@@ -1,0 +1,19 @@
+{% schema %}
+{
+  "name": "Filteration filters",
+  "target": "section",
+  "enabled_on": {
+    "templates": ["collection"]
+  },
+  "settings": []
+}
+{% endschema %}
+
+<div id="shopify-filtration-container"
+  data-shop="{{ shop.permanent_domain }}"
+  data-collection="{{ collection.handle }}"
+  data-api-base="https://thedeserttour.com/filteration-app/api/storefront"
+  data-script-base="https://thedeserttour.com/filteration-app/public/storefront">
+  <noscript>{{ 'collections.filtering' | t }}</noscript>
+</div>
+<script src="https://thedeserttour.com/filteration-app/public/storefront/shopify-filtration.js" defer></script>

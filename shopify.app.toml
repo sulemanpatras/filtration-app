@@ -1,0 +1,19 @@
+name = "Filteration"
+client_id = "96b28fd786201ed64d7351ca24dc2f9c"
+application_url = "https://thedeserttour.com/filteration-app"
+embedded = true
+
+[access_scopes]
+scopes = "read_products,read_product_listings,read_collections"
+
+[auth]
+redirect_urls = [
+  "https://thedeserttour.com/filteration-app/auth/shopify/callback"
+]
+
+[webhooks]
+api_version = "2024-04"
+
+[[webhooks.subscriptions]]
+topics = ["app/uninstalled"]
+uri = "/webhooks/shopify"
