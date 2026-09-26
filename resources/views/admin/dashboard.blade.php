@@ -28,7 +28,7 @@
 <main class="shell">
     <header class="top">
         <div class="brand"><div class="mark">F</div><div><h1>Filteration</h1><p class="muted">Search & Discovery style filters for your theme</p></div></div>
-        @if($shop && $shop->is_active)<span class="status">Connected · {{ $shop->shop_domain }}</span>
+        @if($shop && $shop->is_active)<span class="status">Connected2 · {{ $shop->shop_domain }}</span>
         @else<span class="status off">Store not connected</span>@endif
     </header>
     @if(!$shop)
