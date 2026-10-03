@@ -282,6 +282,7 @@
     svg.setAttribute('height', '8');
     svg.setAttribute('viewBox', '0 0 8 8');
     svg.setAttribute('fill', 'none');
+    svg.style.flexShrink = '0';
     var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     path.setAttribute('d', 'M1 1L7 7M7 1L1 7');
     path.setAttribute('stroke', 'currentColor');
@@ -895,6 +896,23 @@
 
   /* ---------- Sorting Dropdown Builder ---------- */
 
+  function sortChevronSvg() {
+    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('class', 'hdt-sort-chevron-icon');
+    svg.setAttribute('width', '10');
+    svg.setAttribute('height', '8');
+    svg.setAttribute('viewBox', '0 0 19 12');
+    svg.setAttribute('fill', 'none');
+    var polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+    polyline.setAttribute('fill', 'none');
+    polyline.setAttribute('stroke', 'currentColor');
+    polyline.setAttribute('points', '17 2 9.5 10 2 2');
+    polyline.setAttribute('stroke-width', '2');
+    polyline.setAttribute('stroke-linecap', 'square');
+    svg.appendChild(polyline);
+    return svg;
+  }
+
   function buildSortPopover() {
     var currentSortItem = SORTS.find(function (s) { return s[0] === state.sort; }) || SORTS[0];
 
@@ -912,12 +930,7 @@
       },
     }, [
       labelSpan,
-      h('svg', { width: '10', height: '8', viewBox: '0 0 19 12' }, [
-        h('polyline', {
-          fill: 'none', stroke: 'currentColor', points: '17 2 9.5 10 2 2',
-          'stroke-width': '2', 'stroke-linecap': 'square',
-        }),
-      ]),
+      sortChevronSvg(),
     ]);
 
     var menuItems = SORTS.map(function (s) {
@@ -1010,8 +1023,8 @@
   /* ---------- Mounting & DOM Setup ---------- */
 
   function setupNativeEcomus() {
-    var nativeSidebarForm = document.querySelector('#hdt-facet-filters-form-sidebar, .hdt-shop-sidebar form');
-    var nativeGrid = document.querySelector('.hdt-collection-products, [id^="products-template"]');
+    var nativeSidebarForm = document.querySelector('#hdt-facet-filters-form-sidebar, .hdt-shop-sidebar form, .hdt-filter');
+    var nativeGrid = document.querySelector('.hdt-collection-products, [id^="products-template"], .collection-product-list, #product-grid');
 
     if (!nativeGrid || !nativeSidebarForm) return false;
 
@@ -1025,9 +1038,12 @@
       e.stopPropagation();
     }, true);
 
-    // Product grid
+    // Product grid — ensure it has the expected class for our CSS to apply
     els.grid = nativeGrid;
-    els.gridContainer = nativeGrid.closest('.hdt-shop-content') || nativeGrid;
+    if (!nativeGrid.classList.contains('hdt-collection-products')) {
+      nativeGrid.classList.add('hdt-collection-products');
+    }
+    els.gridContainer = nativeGrid.closest('.hdt-shop-content') || nativeGrid.parentNode || nativeGrid;
 
     // Active filters
     els.activeFilters = document.querySelector('.hdt-active-filters');
@@ -1070,10 +1086,17 @@
       });
     }
 
-    // Sort control
+    // Sort control — replace or create
     var sortWrapper = document.querySelector('.hdt-control-sorting');
     if (sortWrapper) {
       sortWrapper.replaceChildren(buildSortPopover());
+    } else {
+      // Look for any existing sort container in the toolbar area
+      var toolbar = document.querySelector('.hdt-shop-control');
+      if (toolbar) {
+        var sortCol = h('div', { class: 'hdt-col hdt-control-sorting' }, buildSortPopover());
+        toolbar.appendChild(sortCol);
+      }
     }
 
     buildMobileDrawer();
@@ -1170,7 +1193,9 @@
         console.info('[big-filters] Collection total products: ' + total);
 
         var nativeFiltersCount = document.querySelectorAll('#hdt-facet-filters-form-sidebar .hdt-filter-group, .hdt-shop-sidebar .hdt-filter-group, #main-collection-filters .facets__wrapper').length;
-        var needsBigFilters = (config.threshold <= 0) || (total > (config.threshold || 5000)) || (nativeFiltersCount === 0);
+        var needsBigFilters = (config.threshold <= 0) || (total >= (config.threshold || 5000)) || (nativeFiltersCount === 0);
+
+        console.info('[big-filters] nativeFiltersCount=' + nativeFiltersCount + ' needsBigFilters=' + needsBigFilters + ' threshold=' + config.threshold + ' total=' + total);
 
         if (!needsBigFilters) {
           console.info('[big-filters] Below threshold and native filters are present.');
@@ -1179,6 +1204,7 @@
 
         // Try direct in-place enhancement first
         var success = setupNativeEcomus();
+        console.info('[big-filters] setupNativeEcomus result=' + success);
 
         // If native structure was missing or replaced by user block
         if (!success) {
@@ -1186,6 +1212,7 @@
                       document.querySelector('#ProductGridContainer') ||
                       document.querySelector('main, #MainContent, [role="main"]') ||
                       document.body;
+          console.info('[big-filters] Using standalone mode, mount=' + (mount ? mount.tagName + '.' + mount.className : 'body'));
           setupStandaloneEcomus(mount);
         }
 

@@ -250,6 +250,8 @@
   color: #777;
   display: inline-flex;
   align-items: center;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .hdt-active-filters__remove {
@@ -265,6 +267,8 @@
   line-height: 1;
   background: transparent;
   cursor: pointer;
+  white-space: nowrap;
+  flex-wrap: nowrap;
   transition: border-color 0.2s ease, background 0.2s ease;
 }
 
@@ -273,10 +277,16 @@
   background: rgba(0, 0, 0, 0.03);
 }
 
+.hdt-active-filters__remove span {
+  white-space: nowrap;
+}
+
 .hdt-active-filters__remove svg {
   width: 9px;
   height: 9px;
+  min-width: 9px;
   opacity: 0.6;
+  flex-shrink: 0;
 }
 
 .hdt-active-filters__remove:hover svg {
