@@ -2,34 +2,26 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Shop extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
-        'shop_domain',
-        'access_token',
-        'scope',
-        'name',
-        'currency',
-        'currency_symbol',
-        'is_active',
-        'last_synced_at',
+        'domain', 'access_token', 'scopes', 'currency', 'sync_status',
+        'bulk_operation_id', 'sync_error', 'synced_at', 'uninstalled_at',
     ];
 
-    protected $casts = [
-        'is_active' => 'boolean',
-        'last_synced_at' => 'datetime',
-    ];
+    protected $hidden = ['access_token'];
 
-    public function collections(): HasMany
+    protected function casts(): array
     {
-        return $this->hasMany(Collection::class);
+        return [
+            'access_token' => 'encrypted',
+            'synced_at' => 'datetime',
+            'uninstalled_at' => 'datetime',
+        ];
     }
 
     public function products(): HasMany
@@ -37,27 +29,23 @@ class Shop extends Model
         return $this->hasMany(Product::class);
     }
 
-    public function filterSetting(): HasOne
+    public function collections(): HasMany
     {
-        return $this->hasOne(FilterSetting::class);
+        return $this->hasMany(Collection::class);
     }
 
-    /**
-     * Get or create default filter settings for this shop.
-     */
-    public function getOrCreateFilterSetting(): FilterSetting
+    public function themeStyle(): HasOne
     {
-        return $this->filterSetting()->firstOrCreate([], [
-            'enable_price' => true,
-            'enable_vendor' => true,
-            'enable_type' => true,
-            'enable_tags' => true,
-            'enable_availability' => true,
-            'per_page' => 24,
-            'theme_accent_color' => '#0f172a',
-            'filter_layout' => 'sidebar',
-            'show_product_count' => true,
-            'auto_mount_on_large_collections_only' => false,
-        ]);
+        return $this->hasOne(ThemeStyle::class);
+    }
+
+    public function themeMarkup(): HasOne
+    {
+        return $this->hasOne(ThemeMarkup::class);
+    }
+
+    public function isInstalled(): bool
+    {
+        return $this->access_token !== null && $this->uninstalled_at === null;
     }
 }

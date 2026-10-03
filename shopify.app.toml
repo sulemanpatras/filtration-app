@@ -1,19 +1,52 @@
-name = "Filteration"
-client_id = "96b28fd786201ed64d7351ca24dc2f9c"
-application_url = "https://thedeserttour.com/filteration-app"
+# Learn more: https://shopify.dev/docs/apps/tools/cli/configuration
+# Run `shopify app config link` to connect this project to your app in the Dev Dashboard
+# (it fills in client_id), then `shopify app dev`.
+client_id = "126fa8870e14a8abb6a2975ba88c4b87"
+name = "Big Collection Filters"
+application_url = "https://example.com"
 embedded = true
 
+[build]
+automatically_update_urls_on_dev = true
+
 [access_scopes]
-scopes = "read_products,read_product_listings,read_collections"
+# Managed installation: Shopify installs the app with these scopes and the backend
+# exchanges the App Bridge session token for an offline token (no OAuth redirect).
+# read_themes is read-only (fetching theme CSS to auto-match its button style) and
+# doesn't require Shopify's protected-scope review, unlike write access would.
+scopes = "read_products,read_themes"
 
 [auth]
-redirect_urls = [
-  "https://thedeserttour.com/filteration-app/auth/shopify/callback"
-]
+redirect_urls = ["https://example.com/auth/callback"]
 
 [webhooks]
-api_version = "2024-04"
+api_version = "2026-07"
 
-[[webhooks.subscriptions]]
-topics = ["app/uninstalled"]
-uri = "/webhooks/shopify"
+  [[webhooks.subscriptions]]
+  topics = ["app/uninstalled"]
+  uri = "/webhooks"
+
+  [[webhooks.subscriptions]]
+  topics = ["products/create", "products/update", "products/delete"]
+  uri = "/webhooks"
+
+  [[webhooks.subscriptions]]
+  topics = ["collections/update", "collections/delete"]
+  uri = "/webhooks"
+
+  [[webhooks.subscriptions]]
+  topics = ["themes/publish"]
+  uri = "/webhooks"
+
+  [[webhooks.subscriptions]]
+  compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
+  uri = "/webhooks"
+
+# Storefront requests to https://{shop}/apps/big-filters/* are forwarded to {url}/*
+[app_proxy]
+url = "https://example.com/proxy"
+subpath = "big-filters"
+prefix = "apps"
+
+[pos]
+embedded = false

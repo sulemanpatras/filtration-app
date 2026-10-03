@@ -2,22 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Collection extends Model
 {
-    use HasFactory;
-
-    protected $fillable = [
-        'shop_id',
-        'shopify_id',
-        'title',
-        'handle',
-        'products_count',
-    ];
+    protected $fillable = ['shop_id', 'shopify_id', 'handle', 'title'];
 
     public function shop(): BelongsTo
     {
@@ -26,6 +17,6 @@ class Collection extends Model
 
     public function products(): BelongsToMany
     {
-        return $this->belongsToMany(Product::class, 'collection_products');
+        return $this->belongsToMany(Product::class);
     }
 }

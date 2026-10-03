@@ -1,73 +1,81 @@
-# Shopify 5,000+ Products Collection Filtration App (Laravel)
+# Big Collection Filters (Laravel + Shopify CLI)
 
-## Why This App Exists
-In Shopify Online Store 2.0 (themes like Dawn, Prestige, Impulse), Shopify's native collection filtering engine **automatically disables and hides filters** whenever a collection contains **more than 5,000 products**. 
+Shopify turns off native storefront filters on any collection with **more than 5,000 products**,
+and no API can turn them back on. This app provides its own filter engine for those collections,
+including `/collections/all`:
 
-Shopify's Liquid `collection.filters` returns empty `[]` on large collections due to server-side facet computing limits.
+1. **Sync.** On install, a GraphQL Bulk Operation copies every product (variants, tags, options,
+   collection membership) into the Laravel database. Product and collection webhooks keep it up to date.
+2. **Filter API.** `GET /apps/big-filters/products` (Shopify App Proxy → `/proxy/products`) returns
+   filtered, sorted, paginated products and facet counts.
+3. **Storefront UI.** A theme app extension shows a filter sidebar, sort, active-filter chips, a product grid
+   and pagination. It only appears on collections whose `all_products_count` is above the threshold.
+   Smaller collections keep Shopify's native filters.
 
-This Laravel application completely solves this limitation by:
-1. **Catalog Indexing**: Syncing products, variants, tags, vendors, types, prices, and collections into an indexed SQLite/MySQL database.
-2. **High-Speed Facet Aggregator**: Dynamically computing facet counts (Price Min/Max, Brands, Product Types, Availability, Tags) across **5,000 to 100,000+ products** in under 50ms.
-3. **AJAX Storefront Widget**: A zero-dependency, modern JavaScript widget (`/storefront/shopify-filtration.js`) that renders the filter sidebar and updates the collection grid without page reloads.
-4. **Merchant Admin Dashboard**: Configure filter display options, sync catalog, and manage store settings.
+Filters: price range, availability, vendor, product type, tags, and every variant option (Size, Color, …).
 
----
+## Requirements
 
-## Quick Start
+- PHP 8.3+, Composer, Node 20+
+- Shopify CLI: `npm install` (installed locally as a dev dependency) or `npm i -g @shopify/cli`
+- A Shopify Partner / Dev Dashboard account and a development store
 
-### 1. Configure Your Shopify Credentials
-Open `.env` in this directory:
-```env
-SHOPIFY_CLIENT_ID=your_shopify_client_id_here
-SHOPIFY_CLIENT_SECRET=your_shopify_client_secret_here
-SHOPIFY_APP_URL=http://localhost:8000
-```
-> If using ngrok or cloudflare tunnel for live testing with Shopify OAuth:
-> `SHOPIFY_APP_URL=https://your-tunnel-subdomain.ngrok-free.app`
+## Local development
 
-### 2. Start the Laravel App
 ```bash
-php artisan serve
-```
-Open **http://localhost:8000** in your browser.
+composer install
+cp .env.example .env && php artisan key:generate
+npm install
 
-### 3. Immediate Testing (No Live Store Needed!)
-In the dashboard, click **"Generate 5,200 Demo Products"**. 
-The app will batch-create 5,200 realistic products under the `huge-catalog` collection. You will immediately see:
-- Live faceted sidebar (Price range slider, brand checkboxes with counts, product types, tags, in-stock toggle).
-- Fast sorting (Price Low-to-High, High-to-Low, A-Z, Date).
-- Instant AJAX product grid and pagination.
+# Connect to (or create) the app in your Dev Dashboard. This fills client_id in shopify.app.toml
+npx shopify app config link
 
----
-
-## Connecting to Your Real Shopify Store (OAuth)
-
-1. In your **Shopify Partner Dashboard** (or Store Admin -> Apps -> Develop apps):
-   - Set **App URL**: `https://your-tunnel-domain.com`
-   - Set **Allowed redirection URL(s)**: `https://your-tunnel-domain.com/auth/shopify/callback`
-   - Scopes: `read_products,read_product_listings,read_collections`
-2. In the app dashboard, enter your store domain (e.g. `your-store.myshopify.com`) and click **"Connect with Shopify OAuth"**.
-3. Once authorized, click **"Sync Products & Collections"** to index your catalog.
-
----
-
-## Theme Integration (Shopify Storefront)
-
-Add this drop-in snippet into your theme's collection template (e.g., `sections/main-collection-product-grid.liquid` or `snippets/shopify-filtration.liquid`):
-
-```liquid
-<div id="shopify-filtration-container"></div>
-<script>
-  window.ShopifyFiltrationApiUrl = "{{ shopify_filtration_app_url | default: 'https://your-app-domain.com' }}";
-  window.ShopifyFiltrationShop = "{{ shop.permanent_domain }}";
-</script>
-<script src="https://your-app-domain.com/storefront/shopify-filtration.js" defer></script>
+# Starts a tunnel, updates app URLs, injects SHOPIFY_API_KEY / SHOPIFY_API_SECRET,
+# and runs `php artisan shopify:serve` (migrations + queue worker + web server).
+npx shopify app dev
 ```
 
----
+Press `p` in the CLI to open the app in your dev store. The first time the admin page loads, the backend
+swaps the App Bridge session token for an offline access token and starts the catalog sync.
 
-## API Endpoints Reference
+Then, in the theme editor:
 
-- `GET /api/storefront/facets?shop={domain}&collection_handle={handle}`: Returns dynamic facet counts and price bounds.
-- `GET /api/storefront/products?shop={domain}&collection_handle={handle}&price_min={min}&price_max={max}&vendors[]={vendor}&page={page}&sort_by={sort}`: Returns filtered, paginated products.
-- `POST /api/webhooks/shopify`: Receives product and collection webhooks to keep the catalog fresh in real time.
+1. **App embeds → Big collection filters → On**. The embed finds the theme's product grid using the
+   "Product grid selector" setting and replaces it.
+2. Optional: add the **Big collection filters** app block to the collection template for exact placement.
+   When the block is present it takes priority over the selector.
+
+## Production
+
+- Set `SHOPIFY_API_KEY`, `SHOPIFY_API_SECRET`, `APP_URL`, and a MySQL/Postgres `DB_*` in `.env`.
+- Run a queue worker (`php artisan queue:work --timeout=3600`) under Supervisor or similar. The sync jobs need it.
+- Set `application_url` and the `app_proxy.url` host in `shopify.app.toml` to your domain, then run
+  `npx shopify app deploy`. This pushes the config, webhooks and theme extension.
+
+## Configuration
+
+| env | default | |
+| --- | --- | --- |
+| `SHOPIFY_FILTER_THRESHOLD` | 5000 | Used by the admin "large collections" report (the storefront threshold is a theme setting) |
+| `SHOPIFY_FACET_LIMIT` | 100 | Max values returned per facet |
+| `SHOPIFY_API_VERSION` | 2026-07 | Admin API version |
+
+## Layout
+
+```
+app/Services/Shopify/ShopifyAuth.php      session token (JWT), webhook HMAC, proxy signature, token exchange
+app/Services/Shopify/CatalogImporter.php  normalizes products (bulk JSONL + webhooks) into the DB
+app/Services/ProductFilter.php            filtering + disjunctive facet counts
+app/Jobs/                                 StartCatalogSync → PollBulkOperation, SyncProduct
+app/Http/Controllers/Shopify/             admin page/API, webhooks, app proxy
+extensions/big-filters/                   theme app extension (embed, block, JS, CSS)
+shopify.app.toml / shopify.web.toml       Shopify CLI config
+```
+
+## Known limitations
+
+- Sort options: newest/oldest, price, and title. "Best selling" and manual collection order aren't in the
+  bulk export, so they aren't offered.
+- Prices are in the shop's base currency. Market or multi-currency price adjustments aren't applied.
+- Price filtering uses each product's lowest variant price.
+- Webhook updates are near real-time. Use **Resync products** in the admin for a full refresh.

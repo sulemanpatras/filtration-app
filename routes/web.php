@@ -1,15 +1,26 @@
 <?php
 
-use App\Http\Controllers\AdminDashboardController;
-use App\Http\Controllers\ShopifyAuthController;
+use App\Http\Controllers\Shopify\AdminController;
+use App\Http\Controllers\Shopify\ProxyController;
+use App\Http\Controllers\Shopify\WebhookController;
+use App\Http\Middleware\EmbeddedAppHeaders;
+use App\Http\Middleware\VerifyAppProxy;
+use App\Http\Middleware\VerifySessionToken;
+use App\Http\Middleware\VerifyWebhook;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
-Route::post('/settings', [AdminDashboardController::class, 'updateSettings'])->name('dashboard.settings');
-Route::post('/sync', [AdminDashboardController::class, 'triggerSync'])->name('dashboard.sync');
+// Embedded admin (loaded inside Shopify admin).
+Route::get('/', [AdminController::class, 'index'])->middleware(EmbeddedAppHeaders::class);
 
-// Shopify OAuth Routes
-Route::prefix('auth/shopify')->group(function () {
-    Route::get('/', [ShopifyAuthController::class, 'install'])->name('shopify.install');
-    Route::get('/callback', [ShopifyAuthController::class, 'callback'])->name('shopify.callback');
+Route::prefix('api')->middleware(VerifySessionToken::class)->group(function () {
+    Route::get('status', [AdminController::class, 'status']);
+    Route::post('sync', [AdminController::class, 'sync']);
 });
+
+// Webhooks declared in shopify.app.toml.
+Route::post('webhooks', WebhookController::class)->middleware(VerifyWebhook::class);
+
+// Storefront App Proxy: https://{shop}/apps/big-filters/* -> /proxy/*
+Route::get('proxy/products', [ProxyController::class, 'products'])->middleware(VerifyAppProxy::class);
+Route::get('proxy/theme-style', [ProxyController::class, 'themeStyle'])->middleware(VerifyAppProxy::class);
+Route::get('proxy/theme-markup', [ProxyController::class, 'themeMarkup'])->middleware(VerifyAppProxy::class);
