@@ -1,4 +1,8 @@
 {
+<<<<<<< HEAD
+=======
+    "$schema": "https://getcomposer.org/schema.json",
+>>>>>>> 8690837 (update)
     "name": "laravel/laravel",
     "type": "project",
     "description": "The skeleton application for the Laravel framework.",
@@ -31,6 +35,25 @@
         }
     },
     "scripts": {
+<<<<<<< HEAD
+=======
+        "setup": [
+            "composer install",
+            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
+            "@php artisan key:generate",
+            "@php artisan migrate --force",
+            "npm install --ignore-scripts",
+            "npm run build"
+        ],
+        "dev": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php artisan dev"
+        ],
+        "test": [
+            "@php artisan config:clear --ansi @no_additional_args",
+            "@php artisan test"
+        ],
+>>>>>>> 8690837 (update)
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"
@@ -44,6 +67,7 @@
         "post-create-project-cmd": [
             "@php artisan key:generate --ansi",
             "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
+<<<<<<< HEAD
             "@php artisan migrate --ansi"
         ]
     },
@@ -51,20 +75,36 @@
         "branch-alias": {
             "dev-master": "11.x-dev"
         },
+=======
+            "@php artisan migrate --graceful --ansi"
+        ],
+        "pre-package-uninstall": [
+            "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
+        ]
+    },
+    "extra": {
+>>>>>>> 8690837 (update)
         "laravel": {
             "dont-discover": []
         }
     },
     "config": {
+<<<<<<< HEAD
+=======
+        "platform-check": false,
+>>>>>>> 8690837 (update)
         "optimize-autoloader": true,
         "preferred-install": "dist",
         "sort-packages": true,
         "allow-plugins": {
             "pestphp/pest-plugin": true,
             "php-http/discovery": true
+<<<<<<< HEAD
         },
         "audit": {
             "block-insecure": false
+=======
+>>>>>>> 8690837 (update)
         }
     },
     "minimum-stability": "stable",

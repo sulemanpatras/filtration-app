@@ -1,0 +1,18 @@
+{% render 'big-filters-loader', bf: block.settings, mount: true %}
+
+{% schema %}
+{
+  "name": "Big collection filters",
+  "target": "section",
+  "templates": ["collection"],
+  "settings": [
+    { "type": "number", "id": "threshold", "label": "Show when a collection has more than", "info": "Shopify disables its own filters above 5,000 products.", "default": 5000 },
+    { "type": "range", "id": "per_page", "label": "Products per page", "min": 12, "max": 48, "step": 4, "default": 24 },
+    { "type": "range", "id": "columns", "label": "Columns on desktop", "min": 2, "max": 6, "step": 1, "default": 4 },
+    { "type": "checkbox", "id": "show_vendor", "label": "Show vendor on product cards", "default": true },
+    { "type": "checkbox", "id": "auto_theme_style", "label": "Match this theme's colors and button style automatically", "info": "Detects a button already on the page and copies its color, border radius and font weight. Turn off to use the accent color below instead.", "default": true },
+    { "type": "color", "id": "accent", "label": "Accent color (used when automatic matching is off, or as a fallback)", "default": "#111111" },
+    { "type": "text", "id": "hide_selector_extra", "label": "Native elements to hide", "info": "CSS selectors, comma separated: the theme's product grid and filters, so they are not shown twice.", "default": "#ProductGridContainer, #main-collection-filters, .facets-container, facet-filters-form" }
+  ]
+}
+{% endschema %}

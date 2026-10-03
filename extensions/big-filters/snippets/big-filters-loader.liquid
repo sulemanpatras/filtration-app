@@ -1,0 +1,36 @@
+{%- comment -%}
+  Shared by the app embed and the app block. Loads on every collection page; the script asks
+  the app for the collection size and only replaces the theme's grid above the threshold
+  (where Shopify disables native filters). Liquid's product count isn't relied on because it
+  is not reliable for very large collections.
+  Accepts: bf (block.settings), mount (true when rendered inside the app block)
+{%- endcomment -%}
+{%- if template.name == 'collection' and collection -%}
+  {%- if mount -%}
+    <div data-big-filters-mount></div>
+  {%- endif -%}
+  <script type="application/json" data-big-filters-config>
+    {
+      "endpoint": "/apps/big-filters/products",
+      "themeStyleEndpoint": "/apps/big-filters/theme-style",
+      "themeMarkupEndpoint": "/apps/big-filters/theme-markup",
+      "collection": {{ collection.handle | json }},
+      "threshold": {{ bf.threshold | default: 5000 | json }},
+      "rootUrl": {{ routes.root_url | json }},
+      "moneyFormat": {{ shop.money_format | json }},
+      "gridSelector": {{ bf.grid_selector_override | json }},
+      "hideSelector": {{ bf.hide_selector_extra | json }},
+      "perPage": {{ bf.per_page | default: 24 | json }},
+      "showVendor": {{ bf.show_vendor | json }},
+      "autoTheme": {{ bf.auto_theme_style | default: true | json }}
+    }
+  </script>
+  {{ 'big-filters.css' | asset_url | stylesheet_tag }}
+  <script src="{{ 'big-filters.js' | asset_url }}" defer></script>
+  <style>
+    .bf-root, .bf-ecomus-root, .hdt-main-collection-content {
+      --bf-columns: {{ bf.columns | default: 4 }};
+      --bf-accent: {{ bf.accent | default: '#111111' }};
+    }
+  </style>
+{%- endif -%}

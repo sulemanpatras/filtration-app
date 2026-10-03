@@ -1,0 +1,6 @@
+name = "laravel"
+roles = ["frontend", "backend"]
+webhooks_path = "/webhooks"
+
+[commands]
+dev = "php artisan shopify:serve"
